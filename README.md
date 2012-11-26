@@ -3,6 +3,9 @@ maze
 
 A simple curses experiment, written in Python
 
+![maze running inside urxvt](https://raw.github.com/joshdk/maze/master/img/sample.png "maze running inside urxvt")
+
+
 Setup
 -----
 
