@@ -1,0 +1,444 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+from random import choice, randint
+import sys
+import curses
+from time import sleep
+from time import time
+
+
+SYMBOLS = [
+	# {
+		# '0000':  ' ',
+		# '0001': u'-',
+		# '0010': u'|',
+		# '0011': u'\\',
+		# '0100': u'-',
+		# '0101': u'-',
+		# '0110': u'/',
+		# '0111': u'v',
+		# '1000': u'|',
+		# '1001': u'/',
+		# '1010': u'|',
+		# '1011': u'<',
+		# '1100': u'\\',
+		# '1101': u'^',
+		# '1110': u'>',
+		# '1111': u'+',
+	# },
+	{
+		'0000':  ' ',
+		'0001': u'╸',
+		'0010': u'╻',
+		'0011': u'┓',
+		'0100': u'╺',
+		'0101': u'━',
+		'0110': u'┏',
+		'0111': u'┳',
+		'1000': u'╹',
+		'1001': u'┛',
+		'1010': u'┃',
+		'1011': u'┫',
+		'1100': u'┗',
+		'1101': u'┻',
+		'1110': u'┣',
+		'1111': u'╋',
+	},
+	# {
+		# '0000':  ' ',
+		# '0001': u'╴',
+		# '0010': u'╷',
+		# '0011': u'┐',
+		# '0100': u'╶',
+		# '0101': u'─',
+		# '0110': u'┌',
+		# '0111': u'┬',
+		# '1000': u'╵',
+		# '1001': u'┘',
+		# '1010': u'│',
+		# '1011': u'┤',
+		# '1100': u'└',
+		# '1101': u'┴',
+		# '1110': u'├',
+		# '1111': u'┼',
+	# },
+	# {
+		# '0000':  ' ',
+		# '0001': u'═',
+		# '0010': u'║',
+		# '0011': u'╗',
+		# '0100': u'═',
+		# '0101': u'═',
+		# '0110': u'╔',
+		# '0111': u'╦',
+		# '1000': u'║',
+		# '1001': u'╝',
+		# '1010': u'║',
+		# '1011': u'╣',
+		# '1100': u'╚',
+		# '1101': u'╩',
+		# '1110': u'╠',
+		# '1111': u'╬',
+	# },
+]
+
+
+
+
+
+class Maze:
+
+	def __init__(self, matrix, color=None, symbol=None):
+		self._matrix = matrix['grid']
+		self._cols = matrix['cols']
+		self._rows = matrix['rows']
+		col = randint(0, self._cols-1)
+		row = randint(0, self._rows-1)
+		if color is None:
+			self._color = randint(0, len(COLORS)-1)
+		else:
+			self._color = color % len(COLORS)
+		if symbol is None:
+			self._symbol = randint(0, len(SYMBOLS)-1)
+		else:
+			self._symbol = symbol % len(SYMBOLS)
+		if self._matrix[col][row] is None:
+			self._matrix[col][row] = [[0,0,0,0], self._color, self._symbol]
+			self._stack = [(col, row)]
+		else:
+			self._stack = []
+		self._redraw = None
+
+
+	def redraw(self, f):
+		self._redraw = f
+
+
+	def _in_bounds(self, col, row):
+		return 0 <= col and col < self._cols and 0 <= row and row < self._rows
+
+
+	def _neighbors(self, col, row):
+		dirs = [(0,-1),(1,0),(0,1),(-1,0)]
+		adj = []
+		for i, dir in enumerate(dirs):
+			ncol = col + dir[0]
+			nrow = row + dir[1]
+			if self._in_bounds(ncol, nrow) and self._matrix[ncol][nrow] is None:
+				adj.append({
+					'dir': i,
+					'col': ncol,
+					'row': nrow
+				})
+		return adj
+
+
+	def step(self, multi=True):
+		if multi == True:
+			while self._step() == False:
+				pass
+		else:
+			self._step()
+
+		return len(self._stack) != 0
+
+
+	def _step(self):
+		if len(self._stack) < 1:
+			return True
+
+		col = self._stack[-1][0]
+		row = self._stack[-1][1]
+
+		# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
+		# if self._matrix[col][row] is None:
+			# self._matrix[col][row] = [0,0,0,0]
+			# return False
+		# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
+
+		adj = self._neighbors(col, row)
+		if len(adj) == 0: #no neighbors...
+			self._stack = self._stack[:-1]
+			# self._stack = []
+			return False
+
+		next = choice(adj)
+		# next = adj[0]
+		# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row][next['dir']])))
+		self._matrix[col][row][0][next['dir']] = 1
+		self._matrix[next['col']][next['row']] = [[0,0,0,0], self._color, self._symbol]
+		self._matrix[next['col']][next['row']][0][(next['dir']+2)%4] = 1
+		self._stack.append((next['col'], next['row']))
+		self._redraw(self._matrix, [self._stack[-1], self._stack[-2]])
+		return True
+		# fill(matrix, next['col'], next['row'])
+		# break
+
+
+
+
+
+def init(screen):
+	rows, cols = screen.getmaxyx()
+
+	matrix = {
+		'grid': [[None for _ in range(rows)] for _ in range(cols)],
+		'cols': cols,
+		'rows': rows
+	}
+
+	start = {
+		'col': randint(0, cols-1),
+		'row': randint(0, rows-1)
+	}
+
+	screen.clear()
+
+	def redraw(matrix, seq):
+		for point in seq:
+			render(screen, matrix, point)
+
+	worms = []
+	# for color in [1,2,4]:
+	for color in range(25):
+		worm = Maze(matrix, color=choice([1,2,3,4,5,8,9,10,11,12,13]))
+		# worm = Maze(matrix)
+		worm.redraw(redraw)
+		worms.append(worm)
+
+	# worm = Maze(matrix, color=1)
+	# worm.redraw(redraw)
+	# worms.append(worm)
+	# worm = Maze(matrix, color=2)
+	# worm.redraw(redraw)
+	# worms.append(worm)
+	# worm = Maze(matrix, color=4)
+	# worm.redraw(redraw)
+	# worms.append(worm)
+
+	return matrix, worms
+
+
+
+
+COLORS = []
+
+
+def run():
+	curses.initscr()
+	curses.start_color()
+	curses.use_default_colors()
+	curses.noecho()
+	curses.curs_set(0)
+	screen = curses.initscr()
+	screen.nodelay(1)
+	screen.keypad(1)
+	screen.clear()
+	# curses.init_pair(1, curses.COLOR_BLUE, -1)#curses.COLOR_BLACK)
+
+	global COLORS
+
+	for n in range(0, 8):
+		curses.init_pair(n+1, n, -1)#curses.COLOR_BLACK)
+		c = curses.color_pair(n+1)
+		COLORS.append(c)
+	for n in range(8, 16):
+		curses.init_pair(n+1, n, -1)#curses.COLOR_BLACK)
+		c = curses.color_pair(n+1) | curses.A_DIM
+		COLORS.append(c)
+
+
+
+	# curses.init_pair(1, curses.COLOR_GREEN, -1)#curses.COLOR_BLACK)
+	screen.bkgd(' ', curses.color_pair(0))
+
+
+	matrix, worms = init(screen)
+
+	# screen.clear()
+	# for n in range(len(COLORS)):
+		# screen.addstr(n, 0, "hello", COLORS[n])
+
+	# sleep(3)
+	# curses.endwin()
+	# return
+
+
+	# maze = Maze(matrix)
+	# maze.redraw(redraw)
+
+	while True:
+		# if len(stack) > 0:
+			# stack, changed = step_fill(matrix, stack)
+
+			# if changed == True:
+				# render(screen, matrix, stack[-1])
+			# else:
+				# continue
+		# else:
+			# matrix, stack = init(screen)
+			# continue
+
+		worms = set([worm for worm in worms if worm.step()])
+
+		# more = False
+		# for worm in worms:
+			# if worm.step() == True:
+				# more = True
+
+		# if more == False:
+		if len(worms) < 1:
+			matrix, worms = init(screen)
+
+		# maze.step()
+
+		sleep(0.01)
+
+		event = screen.getch()
+
+		if event == curses.ERR:
+			continue
+		elif event == ord('q'):
+			break
+		elif event == ord(' '):
+			matrix, worms = init(screen)
+		elif event == curses.KEY_RESIZE:
+			matrix, worms = init(screen)
+
+
+
+	screen.clear()
+	curses.endwin()
+	return 0
+
+
+
+
+
+
+def in_bounds(matrix, col, row):
+	cols = len(matrix)
+	rows = len(matrix[0])
+	return 0 <= col and col < cols and 0 <= row and row < rows
+
+
+def neighbors(matrix, col, row):
+	dirs = [(0,-1),(1,0),(0,1),(-1,0)]
+	adj = []
+	for i, dir in enumerate(dirs):
+		ncol = col + dir[0]
+		nrow = row + dir[1]
+		if in_bounds(matrix, ncol, nrow) and matrix['grid'][ncol][nrow] is None:
+			adj.append({
+				'dir': i,
+				'col': ncol,
+				'row': nrow
+			})
+	return adj
+
+
+
+
+def step_fill(matrix, stack):
+	col = stack[-1]['col']
+	row = stack[-1]['row']
+
+	# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
+	if matrix['grid'][col][row] is None:
+		matrix['grid'][col][row] = [0,0,0,0]
+	# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
+
+	adj = neighbors(matrix, col, row)
+	if len(adj) == 0:
+		stack = stack[:-1]
+		return stack, False
+	next = choice(adj)
+	# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row][next['dir']])))
+	matrix['grid'][col][row][next['dir']] = 1
+	matrix['grid'][next['col']][next['row']] = [0,0,0,0]
+	matrix['grid'][next['col']][next['row']][(next['dir']+2)%4] = 1
+	stack.append(next)
+	return stack, True
+	# fill(matrix, next['col'], next['row'])
+	# break
+
+
+
+
+
+
+def render(screen, matrix, loc):
+	# col = loc['col']
+	# row = loc['row']
+	# print(loc)
+	col = loc[0]
+	row = loc[1]
+	dirs = [(0,0),(0,-1),(1,0),(0,1),(-1,0)]
+	for dir in dirs:
+		ncol = col + dir[0]
+		nrow = row + dir[1]
+		if in_bounds(matrix, ncol, nrow) != True:
+			continue
+		srows, scols = screen.getmaxyx()
+		# if (0 <= ncol and ncol < scols and 0 <= nrow and nrow < srows) != True:
+			# continue
+		try:
+			if matrix[ncol][nrow] is None:
+				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]]['0000'])
+			else:
+				key = ''
+				for val in matrix[ncol][nrow][0]:
+					key += str(val)
+				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]][key], COLORS[matrix[ncol][nrow][1]])
+		except: #when drawing to the bottom-right corner, addstr() moves the cursor one-past the end, thus failing...
+			pass
+
+
+
+# def fill(matrix, col, row):
+	# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
+	# if matrix['grid'][col][row] is None:
+		# matrix['grid'][col][row] = [0,0,0,0]
+	# print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
+	# while True:
+		# adj = neighbors(matrix, col, row)
+		# if len(adj) == 0:
+			# break
+		# next = choice(adj)
+		# # print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row][next['dir']])))
+		# matrix['grid'][col][row][next['dir']] = 1
+		# matrix['grid'][next['col']][next['row']] = [0,0,0,0]
+		# render(matrix)
+		# matrix['grid'][next['col']][next['row']][(next['dir']+2)%4] = 1
+		# fill(matrix, next['col'], next['row'])
+		# # break
+
+
+
+# def render(matrix):
+	# for j in range(matrix['rows']):
+		# print('|', end='')
+		# for i in range(matrix['cols']):
+			# if matrix['grid'][i][j] is None:
+				# print(symbols['0000'], end='')
+			# else:
+				# key = ''
+				# for val in matrix['grid'][i][j]:
+					# key += str(val)
+				# print(symbols[key], end='')
+		# print('|')
+
+
+
+
+def main(argv=None):
+	if argv is None:
+		argv = sys.argv
+	argc = len(argv)
+
+	run()
+
+
+
+if __name__ == '__main__':
+	sys.exit(main())
