@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from random import choice, randint
 import sys
@@ -198,30 +198,50 @@ def init(screen):
 		for point in seq:
 			render(screen, matrix, point)
 
-	worms = []
+	mazes = []
 	# for color in [1,2,4]:
 	for color in range(25):
-		worm = Maze(matrix, color=choice([1,2,3,4,5,8,9,10,11,12,13]))
-		# worm = Maze(matrix)
-		worm.redraw(redraw)
-		worms.append(worm)
+		# maze = Maze(matrix, color=choice([1,2,3,4,5,8,9,10,11,12,13]))
+		maze = Maze(matrix, color=choice([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17]))
+		maze.redraw(redraw)
+		mazes.append(maze)
 
-	# worm = Maze(matrix, color=1)
-	# worm.redraw(redraw)
-	# worms.append(worm)
-	# worm = Maze(matrix, color=2)
-	# worm.redraw(redraw)
-	# worms.append(worm)
-	# worm = Maze(matrix, color=4)
-	# worm.redraw(redraw)
-	# worms.append(worm)
+	# maze = Maze(matrix, color=1)
+	# maze.redraw(redraw)
+	# mazes.append(maze)
+	# maze = Maze(matrix, color=2)
+	# maze.redraw(redraw)
+	# mazes.append(maze)
+	# maze = Maze(matrix, color=4)
+	# maze.redraw(redraw)
+	# mazes.append(maze)
 
-	return matrix, worms
+	return matrix, mazes
 
 
 
 
 COLORS = []
+
+
+def init_colors():
+	if curses.has_colors():
+		for c in range(0, 8):
+			curses.init_pair(c+1, c, -1)
+
+
+def get_color(n):
+	if curses.has_colors() != True:
+		return curses.color_pair(0)
+
+	if n in range(0, 8):
+		return curses.color_pair(n+1)
+
+	if n in range(8, 16):
+		return curses.color_pair(n+1-8) | curses.A_BOLD
+
+	return curses.color_pair(0)
+
 
 
 def run():
@@ -238,22 +258,27 @@ def run():
 
 	global COLORS
 
-	for n in range(0, 8):
-		curses.init_pair(n+1, n, -1)#curses.COLOR_BLACK)
-		c = curses.color_pair(n+1)
-		COLORS.append(c)
-	for n in range(8, 16):
-		curses.init_pair(n+1, n, -1)#curses.COLOR_BLACK)
-		c = curses.color_pair(n+1) | curses.A_DIM
-		COLORS.append(c)
+	init_colors()
+
+	for n in range(16):
+		COLORS.append(get_color(n))
+
+	# for n in range(0, 8):
+		# curses.init_pair(n+1, n, -1)#curses.COLOR_BLACK)
+		# c = curses.color_pair(n+1)
+		# COLORS.append(c)
+	# for n in range(8, 16):
+		# curses.init_pair(n+1, n, -1)#curses.COLOR_BLACK)
+		# c = curses.color_pair(n+1) | curses.A_DIM
+		# COLORS.append(c)
 
 
 
 	# curses.init_pair(1, curses.COLOR_GREEN, -1)#curses.COLOR_BLACK)
-	screen.bkgd(' ', curses.color_pair(0))
+	# screen.bkgd(' ', curses.color_pair(0))
 
 
-	matrix, worms = init(screen)
+	matrix, mazes = init(screen)
 
 	# screen.clear()
 	# for n in range(len(COLORS)):
@@ -279,16 +304,16 @@ def run():
 			# matrix, stack = init(screen)
 			# continue
 
-		worms = set([worm for worm in worms if worm.step()])
+		mazes = set([maze for maze in mazes if maze.step()])
 
 		# more = False
-		# for worm in worms:
-			# if worm.step() == True:
+		# for maze in mazes:
+			# if maze.step() == True:
 				# more = True
 
 		# if more == False:
-		if len(worms) < 1:
-			matrix, worms = init(screen)
+		if len(mazes) < 1:
+			matrix, mazes = init(screen)
 
 		# maze.step()
 
@@ -301,9 +326,9 @@ def run():
 		elif event == ord('q'):
 			break
 		elif event == ord(' '):
-			matrix, worms = init(screen)
+			matrix, mazes = init(screen)
 		elif event == curses.KEY_RESIZE:
-			matrix, worms = init(screen)
+			matrix, mazes = init(screen)
 
 
 
