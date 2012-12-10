@@ -30,21 +30,21 @@ SYMBOLS = [
 	# },
 	{
 		'0000':  ' ',
-		'0001': u'╸',
-		'0010': u'╻',
-		'0011': u'┓',
-		'0100': u'╺',
-		'0101': u'━',
-		'0110': u'┏',
-		'0111': u'┳',
-		'1000': u'╹',
-		'1001': u'┛',
-		'1010': u'┃',
-		'1011': u'┫',
-		'1100': u'┗',
-		'1101': u'┻',
-		'1110': u'┣',
-		'1111': u'╋',
+		'0001': '╸',
+		'0010': '╻',
+		'0011': '┓',
+		'0100': '╺',
+		'0101': '━',
+		'0110': '┏',
+		'0111': '┳',
+		'1000': '╹',
+		'1001': '┛',
+		'1010': '┃',
+		'1011': '┫',
+		'1100': '┗',
+		'1101': '┻',
+		'1110': '┣',
+		'1111': '╋',
 	},
 	# {
 		# '0000':  ' ',
@@ -411,12 +411,12 @@ def render(screen, matrix, loc):
 			# continue
 		try:
 			if matrix[ncol][nrow] is None:
-				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]]['0000'].encode('utf_8'))
+				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]]['0000'])
 			else:
 				key = ''
 				for val in matrix[ncol][nrow][0]:
 					key += str(val)
-				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]][key].encode('utf_8'), COLORS[matrix[ncol][nrow][1]])
+				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]][key], COLORS[matrix[ncol][nrow][1]])
 		except: #when drawing to the bottom-right corner, addstr() moves the cursor one-past the end, thus failing...
 			pass
 
