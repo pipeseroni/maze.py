@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+import locale
+locale.setlocale(locale.LC_ALL, '')
 from random import choice, randint
 import sys
 import curses
@@ -409,12 +411,12 @@ def render(screen, matrix, loc):
 			# continue
 		try:
 			if matrix[ncol][nrow] is None:
-				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]]['0000'])
+				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]]['0000'].encode('utf_8'))
 			else:
 				key = ''
 				for val in matrix[ncol][nrow][0]:
 					key += str(val)
-				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]][key], COLORS[matrix[ncol][nrow][1]])
+				screen.addstr(nrow, ncol, SYMBOLS[matrix[ncol][nrow][2]][key].encode('utf_8'), COLORS[matrix[ncol][nrow][1]])
 		except: #when drawing to the bottom-right corner, addstr() moves the cursor one-past the end, thus failing...
 			pass
 
