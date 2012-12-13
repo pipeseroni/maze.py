@@ -330,12 +330,16 @@ def run():
 
 	matrix, mazes = init(screen)
 
-	while True:
+	(running, paused, quitting) = range(0, 3)
+	state = running
 
-		mazes = set([maze for maze in mazes if maze.step()])
+	while state != quitting:
 
-		if len(mazes) < 1:
-			matrix, mazes = init(screen)
+		if state != paused:
+			mazes = set([maze for maze in mazes if maze.step()])
+
+			if len(mazes) < 1:
+				matrix, mazes = init(screen)
 
 		sleep(0.01)
 
@@ -344,11 +348,15 @@ def run():
 		if event == curses.ERR:
 			continue
 		elif event == ord('q'):
-			break
+			state = quitting
+		elif event == ord('p'):
+			state = running if state == paused else paused
 		elif event == ord(' '):
 			matrix, mazes = init(screen)
+			state = running
 		elif event == curses.KEY_RESIZE:
 			matrix, mazes = init(screen)
+			state = running
 
 	screen.clear()
 	curses.endwin()
