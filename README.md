@@ -3,7 +3,7 @@ maze
 
 A simple curses experiment, written in Python
 
-![maze running inside urxvt](https://raw.github.com/joshdk/maze/master/img/sample.png "maze running inside urxvt")
+![maze running inside urxvt](https://raw.github.com/joshdk/maze/master/img/screenshot.png "maze running inside urxvt")
 
 
 Setup
