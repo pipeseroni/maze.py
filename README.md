@@ -21,6 +21,5 @@ Notes
 -----
 
 ### Dependencies
-*   Python3
-*   Curses
+*   python-curses
 
