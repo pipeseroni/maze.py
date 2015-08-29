@@ -1,4 +1,4 @@
-SOURCE="./src/maze.py"
+SOURCE="./maze.py"
 TARGET="/usr/bin/maze"
 
 
