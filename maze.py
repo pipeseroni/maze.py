@@ -364,10 +364,9 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
 
 # Main
 def main():
-
-    argparser = ArgumentParser(description='simple curses pipes')
-    argparser.add_argument('--symbol_set', nargs='*', type=str, choices=ARCHIVE.keys(), default=['ASCII'])
-    argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100)
+    argparser = ArgumentParser(description='Simple curses pipes')
+    argparser.add_argument('--symbol_set', nargs='*', choices=list(ARCHIVE.keys()), default=['ASCII'], help='One or more allowable symbol sets to use, defaults to ASCII symbols')
+    argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100, help='Maximum allowable drawing rate')
     argparser.add_argument('--color_set', type=str, choices=COLOR_SETS + ['random'], default='random', help='Change the color set pipes are drawn with, defaults to random')
     argparser.add_argument('--min_pipes', type=int, default=5, help="Minimum number of pipes to draw each round, defaults to 5")
     argparser.add_argument('--max_pipes', type=int, default=25, help="Maximum number of pipes to draw each round, defaults to 25")
