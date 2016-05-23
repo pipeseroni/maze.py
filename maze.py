@@ -357,6 +357,9 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
             state = running
 
     screen.clear()
+    screen.keypad(0)
+    screen.nodelay(0)
+    echo()
     endwin()
 
     return 0
