@@ -94,21 +94,28 @@ ARCHIVE = {
     },
 }
 
-COLOR_SETS = ['basic', 'rainbow', 'drab', 'random']
+COLOR_SETS = ['basic', 'rainbow', 'drab']
 
-def get_color_palette(color_set):
-    if color_set == 'random':
+def get_color_palette(color_set, colors_needed):
+    if color_set == 'random' or color_set not in COLOR_SETS:
         color_set = choice(COLOR_SETS)
 
+    base_palette = None
+
     if color_set == 'rainbow':
-        return [1, 2, 3, 4, 5, 9, 10, 11, 12, 13]
+        base_palette = [1, 2, 3, 4, 5, 9, 10, 11, 12, 13]
     elif color_set == 'drab':
-        return [0, 7, 8, 15]
-    else:
-        return [1, 2, 4]
+        base_palette = [0, 7, 8, 15]
+    elif color_set == 'basic':
+        base_palette = [1, 2, 4]
+
+    full_palette = base_palette * ceil(colors_needed / len(base_palette))
+    shuffle(full_palette)
+
+    return full_palette
 
 # Init
-def init(screen, all_symbols, color_set, seed_count):
+def init(screen, all_symbols, color_set, min_pipes, max_pipes):
     rows, cols = screen.getmaxyx()
 
     matrix = {
@@ -131,14 +138,13 @@ def init(screen, all_symbols, color_set, seed_count):
 
     mazes = []
 
-    base_palette = get_color_palette(color_set)
+    seed_count = randint(min_pipes, max_pipes)
 
-    full_palette = base_palette * ceil(seed_count / len(base_palette))
-    shuffle(full_palette)
+    palette = get_color_palette(color_set, seed_count)
 
     for i in range(seed_count):
         maze = Maze(matrix,
-                    color=full_palette[i])
+                    color=palette[i])
         maze.redraw(redraw)
         mazes.append(maze)
 
@@ -304,7 +310,7 @@ class Maze:
 
 
 # Run
-def run(max_framerate, all_symbols, color_set, seed_count):
+def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
     initscr()
     start_color()
     use_default_colors()
@@ -319,7 +325,7 @@ def run(max_framerate, all_symbols, color_set, seed_count):
 
     frame_sleep_time = 1.0 / max_framerate
 
-    matrix, mazes = init(screen, all_symbols, color_set, seed_count)
+    matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
 
     (running, paused, quitting) = range(0, 3)
     state = running
@@ -330,7 +336,7 @@ def run(max_framerate, all_symbols, color_set, seed_count):
             mazes = set([maze for maze in mazes if maze.step()])
 
             if len(mazes) < 1:
-                matrix, mazes = init(screen, all_symbols, color_set, seed_count)
+                matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
 
         sleep(frame_sleep_time)
 
@@ -343,10 +349,10 @@ def run(max_framerate, all_symbols, color_set, seed_count):
         elif event == ord('p'):
             state = running if state == paused else paused
         elif event == ord(' '):
-            matrix, mazes = init(screen, all_symbols, color_set, seed_count)
+            matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
             state = running
         elif event == KEY_RESIZE:
-            matrix, mazes = init(screen, all_symbols, color_set, seed_count)
+            matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
             state = running
 
     screen.clear()
@@ -361,8 +367,9 @@ def main():
     argparser = ArgumentParser(description='simple curses pipes')
     argparser.add_argument('--symbol_set', nargs='*', type=str, choices=ARCHIVE.keys(), default=['ASCII'])
     argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100)
-    argparser.add_argument('--color_set', type=str, choices=COLOR_SETS, default='random', help='Change the color set pipes are drawn with, defaults to random')
-    argparser.add_argument('--seed_count', type=int, default=randint(5, 15), help='Number of pipes to draw simultaneously, defaults to a random number between 5 and 25')
+    argparser.add_argument('--color_set', type=str, choices=COLOR_SETS + ['random'], default='random', help='Change the color set pipes are drawn with, defaults to random')
+    argparser.add_argument('--min_pipes', type=int, default=5, help="Minimum number of pipes to draw each round")
+    argparser.add_argument('--max_pipes', type=int, default=15, help="Maximum number of pipes to draw each round")
 
     args = argparser.parse_args()
 
@@ -370,7 +377,8 @@ def main():
         max_framerate=args.max_framerate,
         all_symbols=[ARCHIVE.get(syms) for syms in args.symbol_set],
         color_set=args.color_set,
-        seed_count=args.seed_count
+        min_pipes=args.min_pipes,
+        max_pipes=args.max_pipes
         )
     return 0
 
