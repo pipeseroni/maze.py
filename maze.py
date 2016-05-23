@@ -94,8 +94,9 @@ ARCHIVE = {
     },
 }
 
-COLOR_SETS = ['basic', 'rainbow', 'drab']
+COLOR_SETS = ['basic', 'rainbow', 'drab'] #possible kinds of color sets, user can also use 'random' to pick a different one each iteration
 
+# Create a randomized color palette based on the given color set with at least 'colors_needed' values
 def get_color_palette(color_set, colors_needed):
     if color_set == 'random' or color_set not in COLOR_SETS:
         color_set = choice(COLOR_SETS)
