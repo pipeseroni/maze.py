@@ -3,7 +3,8 @@
 
 from curses import *
 from locale import setlocale, LC_ALL
-from random import choice, randint
+from random import choice, randint, shuffle
+from math import ceil
 from sys import argv, exit
 from time import sleep
 from argparse import ArgumentParser
@@ -93,8 +94,21 @@ ARCHIVE = {
     },
 }
 
+COLOR_SETS = ['basic', 'rainbow', 'drab', 'random']
+
+def get_color_palette(color_set):
+    if color_set == 'random':
+        color_set = choice(COLOR_SETS)
+
+    if color_set == 'rainbow':
+        return [1, 2, 3, 4, 5, 9, 10, 11, 12, 13]
+    elif color_set == 'drab':
+        return [0, 7, 8, 15]
+    else:
+        return [1, 2, 4]
+
 # Init
-def init(screen, all_symbols):
+def init(screen, all_symbols, color_set, seed_count):
     rows, cols = screen.getmaxyx()
 
     matrix = {
@@ -116,29 +130,15 @@ def init(screen, all_symbols):
             render(screen, all_symbols, matrix, point)
 
     mazes = []
-    # for color in [1,2,4]:
-    type = randint(0, 2)
-    if type == 0:
-        for _ in range(25):
-            maze = Maze(matrix,
-                        color=choice([1, 2, 3, 4, 5, 9, 10, 11, 12, 13]))
-            maze.redraw(redraw)
-            mazes.append(maze)
 
-    elif type == 1:
-        for _ in range(25):
-            maze = Maze(matrix, color=choice([0, 7, 8, 15]))
-            maze.redraw(redraw)
-            mazes.append(maze)
+    base_palette = get_color_palette(color_set)
 
-    elif type == 2:
-        maze = Maze(matrix, color=1)
-        maze.redraw(redraw)
-        mazes.append(maze)
-        maze = Maze(matrix, color=2)
-        maze.redraw(redraw)
-        mazes.append(maze)
-        maze = Maze(matrix, color=4)
+    full_palette = base_palette * ceil(seed_count / len(base_palette))
+    shuffle(full_palette)
+
+    for i in range(seed_count):
+        maze = Maze(matrix,
+                    color=full_palette[i])
         maze.redraw(redraw)
         mazes.append(maze)
 
@@ -304,7 +304,7 @@ class Maze:
 
 
 # Run
-def run(max_framerate, all_symbols):
+def run(max_framerate, all_symbols, color_set, seed_count):
     initscr()
     start_color()
     use_default_colors()
@@ -319,7 +319,7 @@ def run(max_framerate, all_symbols):
 
     frame_sleep_time = 1.0 / max_framerate
 
-    matrix, mazes = init(screen, all_symbols)
+    matrix, mazes = init(screen, all_symbols, color_set, seed_count)
 
     (running, paused, quitting) = range(0, 3)
     state = running
@@ -330,7 +330,7 @@ def run(max_framerate, all_symbols):
             mazes = set([maze for maze in mazes if maze.step()])
 
             if len(mazes) < 1:
-                matrix, mazes = init(screen)
+                matrix, mazes = init(screen, all_symbols, color_set, seed_count)
 
         sleep(frame_sleep_time)
 
@@ -343,10 +343,10 @@ def run(max_framerate, all_symbols):
         elif event == ord('p'):
             state = running if state == paused else paused
         elif event == ord(' '):
-            matrix, mazes = init(screen)
+            matrix, mazes = init(screen, all_symbols, color_set, seed_count)
             state = running
         elif event == KEY_RESIZE:
-            matrix, mazes = init(screen)
+            matrix, mazes = init(screen, all_symbols, color_set, seed_count)
             state = running
 
     screen.clear()
@@ -361,11 +361,16 @@ def main():
     argparser = ArgumentParser(description='simple curses pipes')
     argparser.add_argument('--symbol_set', nargs='*', type=str, choices=ARCHIVE.keys(), default=['ASCII'])
     argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100)
+    argparser.add_argument('--color_set', type=str, choices=COLOR_SETS, default='random', help='Change the color set pipes are drawn with, defaults to random')
+    argparser.add_argument('--seed_count', type=int, default=randint(5, 15), help='Number of pipes to draw simultaneously, defaults to a random number between 5 and 25')
+
     args = argparser.parse_args()
 
     run(
         max_framerate=args.max_framerate,
-        all_symbols=[ARCHIVE.get(syms) for syms in args.symbol_set]
+        all_symbols=[ARCHIVE.get(syms) for syms in args.symbol_set],
+        color_set=args.color_set,
+        seed_count=args.seed_count
         )
     return 0
 
