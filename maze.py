@@ -369,8 +369,8 @@ def main():
     argparser.add_argument('--symbol_set', nargs='*', type=str, choices=ARCHIVE.keys(), default=['ASCII'])
     argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100)
     argparser.add_argument('--color_set', type=str, choices=COLOR_SETS + ['random'], default='random', help='Change the color set pipes are drawn with, defaults to random')
-    argparser.add_argument('--min_pipes', type=int, default=5, help="Minimum number of pipes to draw each round")
-    argparser.add_argument('--max_pipes', type=int, default=15, help="Maximum number of pipes to draw each round")
+    argparser.add_argument('--min_pipes', type=int, default=5, help="Minimum number of pipes to draw each round, defaults to 5")
+    argparser.add_argument('--max_pipes', type=int, default=25, help="Maximum number of pipes to draw each round, defaults to 25")
 
     args = argparser.parse_args()
 
