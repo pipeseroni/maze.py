@@ -6,13 +6,14 @@ from locale import setlocale, LC_ALL
 from random import choice, randint
 from sys import argv, exit
 from time import sleep
+from argparse import ArgumentParser
 
 setlocale(LC_ALL, '')
 
 # Symbols
-ARCHIVE = [
+ARCHIVE = {
     # ASCII lines
-    {
+    'ASCII' : {
         '0000': ' ',
         '0001': '-',
         '0010': '|',
@@ -32,7 +33,7 @@ ARCHIVE = [
     },
 
     # Thick lines
-    {
+    'THICK' : {
         '0000': ' ',
         '0001': '╸',
         '0010': '╻',
@@ -52,7 +53,7 @@ ARCHIVE = [
     },
 
     # Thin lines
-    {
+    'THIN' : {
         '0000': ' ',
         '0001': '╴',
         '0010': '╷',
@@ -72,7 +73,7 @@ ARCHIVE = [
     },
 
     # Double lines
-    {
+    'DOUBLE' : {
         '0000': ' ',
         '0001': '═',
         '0010': '║',
@@ -90,15 +91,14 @@ ARCHIVE = [
         '1110': '╠',
         '1111': '╬',
     },
-]
-SYMBOLS = [ARCHIVE[3]]
-
+}
 
 # Init
-def init(screen):
+def init(screen, all_symbols):
     rows, cols = screen.getmaxyx()
 
     matrix = {
+        'symbols':all_symbols,
         'grid': [[None for _ in range(rows)] for _ in range(cols)],
         'cols': cols,
         'rows': rows
@@ -111,9 +111,9 @@ def init(screen):
 
     screen.clear()
 
-    def redraw(matrix, seq):
+    def redraw(all_symbols, matrix, seq):
         for point in seq:
-            render(screen, matrix, point)
+            render(screen, all_symbols, matrix, point)
 
     mazes = []
     # for color in [1,2,4]:
@@ -167,7 +167,7 @@ def get_color(n):
 
 
 # Render matrix
-def render(screen, matrix, loc):
+def render(screen, all_symbols, matrix, loc):
 
     def in_bounds(matrix, col, row):
         cols = len(matrix)
@@ -193,13 +193,13 @@ def render(screen, matrix, loc):
         try:
             if matrix[ncol][nrow] is None:
                 screen.addstr(nrow, ncol,
-                              SYMBOLS[matrix[ncol][nrow][2]]['0000'])
+                              all_symbols[matrix[ncol][nrow][2]]['0000'])
             else:
                 key = ''
                 for val in matrix[ncol][nrow][0]:
                     key += str(val)
                 screen.addstr(nrow, ncol,
-                              SYMBOLS[matrix[ncol][nrow][2]][key],
+                              all_symbols[matrix[ncol][nrow][2]][key],
                               get_color(matrix[ncol][nrow][1]))
         except:
             """
@@ -217,13 +217,14 @@ class Maze:
         self._matrix = matrix['grid']
         self._cols = matrix['cols']
         self._rows = matrix['rows']
+        self._all_symbols = matrix['symbols']
         col = randint(0, self._cols-1)
         row = randint(0, self._rows-1)
         self._color = 0 if color is None else color
         if symbol is None:
-            self._symbol = randint(0, len(SYMBOLS)-1)
+            self._symbol = randint(0, len(self._all_symbols)-1)
         else:
-            self._symbol = symbol % len(SYMBOLS)
+            self._symbol = symbol % len(self._all_symbols)
         if self._matrix[col][row] is None:
             self._matrix[col][row] = [[0, 0, 0, 0], self._color, self._symbol]
             self._stack = [(col, row)]
@@ -296,14 +297,14 @@ class Maze:
                                                   self._color, self._symbol]
         self._matrix[next['col']][next['row']][0][(next['dir']+2) % 4] = 1
         self._stack.append((next['col'], next['row']))
-        self._redraw(self._matrix, [self._stack[-1], self._stack[-2]])
+        self._redraw(self._all_symbols, self._matrix, [self._stack[-1], self._stack[-2]])
         return True
         # fill(matrix, next['col'], next['row'])
         # break
 
 
 # Run
-def run():
+def run(max_framerate, all_symbols):
     initscr()
     start_color()
     use_default_colors()
@@ -316,7 +317,9 @@ def run():
 
     init_colors()
 
-    matrix, mazes = init(screen)
+    frame_sleep_time = 1.0 / max_framerate
+
+    matrix, mazes = init(screen, all_symbols)
 
     (running, paused, quitting) = range(0, 3)
     state = running
@@ -329,7 +332,7 @@ def run():
             if len(mazes) < 1:
                 matrix, mazes = init(screen)
 
-        sleep(0.01)
+        sleep(frame_sleep_time)
 
         event = screen.getch()
 
@@ -353,11 +356,17 @@ def run():
 
 
 # Main
-def main(argv=None):
-    if argv is None:
-        argv = ""
-    argc = len(argv)
-    run()
+def main():
+
+    argparser = ArgumentParser(description='simple curses pipes')
+    argparser.add_argument('--symbol_set', nargs='*', type=str, choices=ARCHIVE.keys(), default=['ASCII'])
+    argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100)
+    args = argparser.parse_args()
+
+    run(
+        max_framerate=args.max_framerate,
+        all_symbols=[ARCHIVE.get(syms) for syms in args.symbol_set]
+        )
     return 0
 
 
