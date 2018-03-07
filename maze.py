@@ -7,6 +7,8 @@ from random import choice, randint
 from sys import argv, exit
 from time import sleep
 
+VERSION='0.0.0'
+
 setlocale(LC_ALL, '')
 
 # Symbols
