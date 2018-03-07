@@ -9,6 +9,8 @@ from sys import argv, exit
 from time import sleep
 from argparse import ArgumentParser
 
+VERSION='0.0.0'
+
 setlocale(LC_ALL, '')
 
 # Symbols
