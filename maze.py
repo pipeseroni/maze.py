@@ -15,7 +15,6 @@ setlocale(LC_ALL, '')
 
 # Symbols
 ARCHIVE = {
-    # ASCII lines
     'ASCII': {
         '0000': ' ',
         '0001': '-',
@@ -34,8 +33,6 @@ ARCHIVE = {
         '1110': '>',
         '1111': '+',
     },
-
-    # Thick lines
     'THICK': {
         '0000': ' ',
         '0001': '╸',
@@ -54,8 +51,6 @@ ARCHIVE = {
         '1110': '┣',
         '1111': '╋',
     },
-
-    # Thin lines
     'THIN': {
         '0000': ' ',
         '0001': '╴',
@@ -74,8 +69,6 @@ ARCHIVE = {
         '1110': '├',
         '1111': '┼',
     },
-
-    # Double lines
     'DOUBLE': {
         '0000': ' ',
         '0001': '═',
@@ -124,7 +117,6 @@ def get_color_palette(color_set, colors_needed):
     return full_palette
 
 
-# Init
 def init(screen, all_symbols, color_set, min_pipes, max_pipes):
     rows, cols = screen.getmaxyx()
 
@@ -156,14 +148,12 @@ def init(screen, all_symbols, color_set, min_pipes, max_pipes):
     return matrix, mazes
 
 
-# Init colors
 def init_colors():
     if curses.has_colors():
         for c in range(0, 8):
             curses.init_pair(c + 1, c, -1)
 
 
-# Get color
 def get_color(n):
     if not curses.has_colors():
         return curses.color_pair(0)
@@ -185,9 +175,6 @@ def render(screen, all_symbols, matrix, loc):
         rows = len(matrix[0])
         return 0 <= col and col < cols and 0 <= row and row < rows
 
-    # col = loc['col']
-    # row = loc['row']
-    # print(loc)
     col = loc[0]
     row = loc[1]
     dirs = [(0, 0), (0, -1), (1, 0), (0, 1), (-1, 0)]
@@ -197,10 +184,6 @@ def render(screen, all_symbols, matrix, loc):
         if not in_bounds(matrix, ncol, nrow):
             continue
         srows, scols = screen.getmaxyx()
-        """
-        if (0 <= ncol and ncol < scols and 0 <= nrow and nrow < srows) != True:
-            continue
-        """
         try:
             if matrix[ncol][nrow] is None:
                 screen.addstr(nrow, ncol,
@@ -212,18 +195,14 @@ def render(screen, all_symbols, matrix, loc):
                 screen.addstr(nrow, ncol,
                               all_symbols[matrix[ncol][nrow][2]][key],
                               get_color(matrix[ncol][nrow][1]))
-        except (TypeError, error):
-            """
-            when drawing to the bottom-right corner, addstr() moves the cursor
-            one-past the end, thus failing...
-            """
+        except (TypeError, curses.error):
+            # when drawing to the bottom-right corner, addstr() moves the
+            # cursor one-past the end, thus failing...
             pass
 
 
-# Maze class
 class Maze:
 
-    # Init
     def __init__(self, matrix, color=None, symbol=None):
         self._matrix = matrix['grid']
         self._cols = matrix['cols']
@@ -243,7 +222,6 @@ class Maze:
             self._stack = []
         self._redraw = None
 
-    # Redraw
     def redraw(self, f):
         self._redraw = f
 
@@ -267,7 +245,6 @@ class Maze:
                 })
         return adj
 
-    # Step
     def step(self, multi=True):
         if multi is True:
             while not self._step():
@@ -285,24 +262,12 @@ class Maze:
         col = self._stack[-1][0]
         row = self._stack[-1][1]
 
-        """
-        print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
-        if self._matrix[col][row] is None:
-            self._matrix[col][row] = [0,0,0,0]
-            return False
-        print('at (%d,%d) = %s' % (col, row, str(matrix['grid'][col][row])))
-        """
-
         adj = self._neighbors(col, row)
         if len(adj) == 0:  # no neighbors...
             self._stack = self._stack[:-1]
-            # self._stack = []
             return False
 
         next = choice(adj)
-        # next = adj[0]
-        # print('at (%d,%d) = %s' % (col, row,
-        #                            str(matrix['grid'][col][row][next['dir']])))
         self._matrix[col][row][0][next['dir']] = 1
         self._matrix[next['col']][next['row']] = [[0, 0, 0, 0],
                                                   self._color, self._symbol]
@@ -310,11 +275,8 @@ class Maze:
         self._stack.append((next['col'], next['row']))
         self._redraw(self._all_symbols, self._matrix, self._stack[-1:-3:-1])
         return True
-        # fill(matrix, next['col'], next['row'])
-        # break
 
 
-# Run
 def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
     curses.initscr()
     curses.start_color()
@@ -372,7 +334,6 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
     return 0
 
 
-# Main
 def main():
     p = ArgumentParser(description='Simple curses pipes')
     p.add_argument(
