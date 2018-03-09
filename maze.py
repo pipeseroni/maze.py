@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
-from curses import *
+import curses
 from locale import setlocale, LC_ALL
 from random import choice, randint, shuffle
 from math import ceil
-from sys import argv, exit
+from sys import exit
 from time import sleep
 from argparse import ArgumentParser
 
@@ -135,11 +135,6 @@ def init(screen, all_symbols, color_set, min_pipes, max_pipes):
         'rows': rows
     }
 
-    start = {
-        'col': randint(0, cols-1),
-        'row': randint(0, rows-1)
-    }
-
     screen.clear()
 
     def redraw(all_symbols, matrix, seq):
@@ -163,15 +158,15 @@ def init(screen, all_symbols, color_set, min_pipes, max_pipes):
 
 # Init colors
 def init_colors():
-    if has_colors():
+    if curses.has_colors():
         for c in range(0, 8):
             init_pair(c+1, c, -1)
 
 
 # Get color
 def get_color(n):
-    if not has_colors():
-        return color_pair(0)
+    if not curses.has_colors():
+        return curses.color_pair(0)
 
     if n in range(0, 8):
         return color_pair(n+1)
@@ -179,7 +174,7 @@ def get_color(n):
     if n in range(8, 16):
         return color_pair(n+1-8) | A_BOLD
 
-    return color_pair(0)
+    return curses.color_pair(0)
 
 
 # Render matrix
@@ -321,12 +316,12 @@ class Maze:
 
 # Run
 def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
-    initscr()
-    start_color()
-    use_default_colors()
-    noecho()
-    curs_set(0)
-    screen = initscr()
+    curses.initscr()
+    curses.start_color()
+    curses.use_default_colors()
+    curses.noecho()
+    curses.curs_set(0)
+    screen = curses.initscr()
     screen.nodelay(1)
     screen.keypad(1)
     screen.clear()
@@ -353,7 +348,7 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
 
         event = screen.getch()
 
-        if event == ERR:
+        if event == curses.ERR:
             continue
         elif event == ord('q'):
             state = quitting
@@ -363,7 +358,7 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
             matrix, mazes = init(screen, all_symbols, color_set, min_pipes,
                                  max_pipes)
             state = running
-        elif event == KEY_RESIZE:
+        elif event == curses.KEY_RESIZE:
             matrix, mazes = init(screen, all_symbols, color_set, min_pipes,
                                  max_pipes)
             state = running
@@ -371,8 +366,8 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
     screen.clear()
     screen.keypad(0)
     screen.nodelay(0)
-    echo()
-    endwin()
+    curses.echo()
+    curses.endwin()
 
     return 0
 
