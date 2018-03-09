@@ -15,78 +15,10 @@ setlocale(LC_ALL, '')
 
 # Symbols
 ARCHIVE = {
-    'ASCII': {
-        '0000': ' ',
-        '0001': '-',
-        '0010': '|',
-        '0011': '\\',
-        '0100': '-',
-        '0101': '-',
-        '0110': '/',
-        '0111': 'v',
-        '1000': '|',
-        '1001': '/',
-        '1010': '|',
-        '1011': '<',
-        '1100': '\\',
-        '1101': '^',
-        '1110': '>',
-        '1111': '+',
-    },
-    'THICK': {
-        '0000': ' ',
-        '0001': '╸',
-        '0010': '╻',
-        '0011': '┓',
-        '0100': '╺',
-        '0101': '━',
-        '0110': '┏',
-        '0111': '┳',
-        '1000': '╹',
-        '1001': '┛',
-        '1010': '┃',
-        '1011': '┫',
-        '1100': '┗',
-        '1101': '┻',
-        '1110': '┣',
-        '1111': '╋',
-    },
-    'THIN': {
-        '0000': ' ',
-        '0001': '╴',
-        '0010': '╷',
-        '0011': '┐',
-        '0100': '╶',
-        '0101': '─',
-        '0110': '┌',
-        '0111': '┬',
-        '1000': '╵',
-        '1001': '┘',
-        '1010': '│',
-        '1011': '┤',
-        '1100': '└',
-        '1101': '┴',
-        '1110': '├',
-        '1111': '┼',
-    },
-    'DOUBLE': {
-        '0000': ' ',
-        '0001': '═',
-        '0010': '║',
-        '0011': '╗',
-        '0100': '═',
-        '0101': '═',
-        '0110': '╔',
-        '0111': '╦',
-        '1000': '║',
-        '1001': '╝',
-        '1010': '║',
-        '1011': '╣',
-        '1100': '╚',
-        '1101': '╩',
-        '1110': '╠',
-        '1111': '╬',
-    },
+    'ASCII': ' -|\\--/v|/|<\\^>+',
+    'THICK': ' ╸╻┓╺━┏┳╹┛┃┫┗┻┣╋',
+    'THIN': ' ╴╷┐╶─┌┬╵┘│┤└┴├┼',
+    'DOUBLE': ' ═║╗══╔╦║╝║╣╚╩╠╬',
 }
 
 # possible kinds of color sets, user can also use 'random' to pick a different
@@ -185,16 +117,13 @@ def render(screen, all_symbols, matrix, loc):
             continue
         srows, scols = screen.getmaxyx()
         try:
+            cell = matrix[ncol][nrow]
             if matrix[ncol][nrow] is None:
-                screen.addstr(nrow, ncol,
-                              all_symbols[matrix[ncol][nrow][2]]['0000'])
+                screen.addstr(nrow, ncol, all_symbols[[2]][0])
             else:
-                key = ''
-                for val in matrix[ncol][nrow][0]:
-                    key += str(val)
-                screen.addstr(nrow, ncol,
-                              all_symbols[matrix[ncol][nrow][2]][key],
-                              get_color(matrix[ncol][nrow][1]))
+                key = sum(cell[0][i] << (3 - i) for i in range(0, 4))
+                screen.addstr(nrow, ncol, all_symbols[cell[2]][key],
+                              get_color(cell[1]))
         except (TypeError, curses.error):
             # when drawing to the bottom-right corner, addstr() moves the
             # cursor one-past the end, thus failing...
