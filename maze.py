@@ -337,29 +337,37 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
 def main():
     p = ArgumentParser(description='Simple curses pipes')
     p.add_argument(
-        '--symbol_set', nargs='*',
+        '-s', '--symbol_set', nargs='*',
         choices=list(ARCHIVE.keys()), default=['ASCII'],
         help=('One or more allowable symbol sets to use, defaults to ASCII '
               'symbols')
         )
     p.add_argument(
-        '--max_framerate', type=int, choices=MAX_FRAMERATE_CHOICES,
+        '-f', '--max_framerate', type=int, choices=MAX_FRAMERATE_CHOICES,
         default=100, help='Maximum allowable drawing rate')
     p.add_argument(
-        '--color_set', type=str, choices=COLOR_SETS + ['random'],
+        '-c', '--color_set', type=str, choices=COLOR_SETS + ['random'],
         default='random',
         help='Change the color set pipes are drawn with, defaults to random'
         )
     p.add_argument(
-        '--min_pipes', type=int, default=5,
+        '-p', '--min_pipes', type=int, default=5,
         help='Minimum number of pipes to draw each round, defaults to 5'
         )
     p.add_argument(
-        '--max_pipes', type=int, default=25,
+        '-P', '--max_pipes', type=int, default=25,
         help='Maximum number of pipes to draw each round, defaults to 25'
         )
 
     args = p.parse_args()
+
+    # validate number of pipes
+    if args.min_pipes < 1:
+        p.error('--min_pipes must be greater than 0')
+    if args.max_pipes < 1:
+        p.error('--max_pipes must be greater than 0')
+    if args.min_pipes > args.max_pipes:
+        p.error('--min_pipes must be less than or equal to --max_pipes')
 
     run(
         max_framerate=args.max_framerate,
