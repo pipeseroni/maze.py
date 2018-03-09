@@ -9,14 +9,14 @@ from sys import argv, exit
 from time import sleep
 from argparse import ArgumentParser
 
-VERSION='0.0.0'
+VERSION = '0.0.0'
 
 setlocale(LC_ALL, '')
 
 # Symbols
 ARCHIVE = {
     # ASCII lines
-    'ASCII' : {
+    'ASCII': {
         '0000': ' ',
         '0001': '-',
         '0010': '|',
@@ -36,7 +36,7 @@ ARCHIVE = {
     },
 
     # Thick lines
-    'THICK' : {
+    'THICK': {
         '0000': ' ',
         '0001': '╸',
         '0010': '╻',
@@ -56,7 +56,7 @@ ARCHIVE = {
     },
 
     # Thin lines
-    'THIN' : {
+    'THIN': {
         '0000': ' ',
         '0001': '╴',
         '0010': '╷',
@@ -76,7 +76,7 @@ ARCHIVE = {
     },
 
     # Double lines
-    'DOUBLE' : {
+    'DOUBLE': {
         '0000': ' ',
         '0001': '═',
         '0010': '║',
@@ -96,9 +96,15 @@ ARCHIVE = {
     },
 }
 
-COLOR_SETS = ['basic', 'rainbow', 'drab'] #possible kinds of color sets, user can also use 'random' to pick a different one each iteration
+# possible kinds of color sets, user can also use 'random' to pick a different
+# one each iteration
+COLOR_SETS = ['basic', 'rainbow', 'drab']
 
-# Create a randomized color palette based on the given color set with at least 'colors_needed' values
+MAX_FRAMERATE_CHOICES = [1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
+
+# Create a randomized color palette based on the given color set with at least
+# 'colors_needed' values
 def get_color_palette(color_set, colors_needed):
     if color_set == 'random' or color_set not in COLOR_SETS:
         color_set = choice(COLOR_SETS)
@@ -117,12 +123,13 @@ def get_color_palette(color_set, colors_needed):
 
     return full_palette
 
+
 # Init
 def init(screen, all_symbols, color_set, min_pipes, max_pipes):
     rows, cols = screen.getmaxyx()
 
     matrix = {
-        'symbols':all_symbols,
+        'symbols': all_symbols,
         'grid': [[None for _ in range(rows)] for _ in range(cols)],
         'cols': cols,
         'rows': rows
@@ -163,7 +170,7 @@ def init_colors():
 
 # Get color
 def get_color(n):
-    if has_colors() != True:
+    if not has_colors():
         return color_pair(0)
 
     if n in range(0, 8):
@@ -192,7 +199,7 @@ def render(screen, all_symbols, matrix, loc):
     for dir in dirs:
         ncol = col + dir[0]
         nrow = row + dir[1]
-        if in_bounds(matrix, ncol, nrow) != True:
+        if not in_bounds(matrix, ncol, nrow):
             continue
         srows, scols = screen.getmaxyx()
         """
@@ -210,7 +217,7 @@ def render(screen, all_symbols, matrix, loc):
                 screen.addstr(nrow, ncol,
                               all_symbols[matrix[ncol][nrow][2]][key],
                               get_color(matrix[ncol][nrow][1]))
-        except:
+        except (TypeError, error):
             """
             when drawing to the bottom-right corner, addstr() moves the cursor
             one-past the end, thus failing...
@@ -268,7 +275,7 @@ class Maze:
     # Step
     def step(self, multi=True):
         if multi is True:
-            while self._step() == False:
+            while not self._step():
                 pass
         else:
             self._step()
@@ -306,7 +313,7 @@ class Maze:
                                                   self._color, self._symbol]
         self._matrix[next['col']][next['row']][0][(next['dir']+2) % 4] = 1
         self._stack.append((next['col'], next['row']))
-        self._redraw(self._all_symbols, self._matrix, [self._stack[-1], self._stack[-2]])
+        self._redraw(self._all_symbols, self._matrix, self._stack[-1:-3:-1])
         return True
         # fill(matrix, next['col'], next['row'])
         # break
@@ -339,7 +346,8 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
             mazes = set([maze for maze in mazes if maze.step()])
 
             if len(mazes) < 1:
-                matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
+                matrix, mazes = init(screen, all_symbols, color_set, min_pipes,
+                                     max_pipes)
 
         sleep(frame_sleep_time)
 
@@ -352,10 +360,12 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
         elif event == ord('p'):
             state = running if state == paused else paused
         elif event == ord(' '):
-            matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
+            matrix, mazes = init(screen, all_symbols, color_set, min_pipes,
+                                 max_pipes)
             state = running
         elif event == KEY_RESIZE:
-            matrix, mazes = init(screen, all_symbols, color_set, min_pipes, max_pipes)
+            matrix, mazes = init(screen, all_symbols, color_set, min_pipes,
+                                 max_pipes)
             state = running
 
     screen.clear()
@@ -369,14 +379,31 @@ def run(max_framerate, all_symbols, color_set, min_pipes, max_pipes):
 
 # Main
 def main():
-    argparser = ArgumentParser(description='Simple curses pipes')
-    argparser.add_argument('--symbol_set', nargs='*', choices=list(ARCHIVE.keys()), default=['ASCII'], help='One or more allowable symbol sets to use, defaults to ASCII symbols')
-    argparser.add_argument('--max_framerate', type=int, choices=[1, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100], default=100, help='Maximum allowable drawing rate')
-    argparser.add_argument('--color_set', type=str, choices=COLOR_SETS + ['random'], default='random', help='Change the color set pipes are drawn with, defaults to random')
-    argparser.add_argument('--min_pipes', type=int, default=5, help="Minimum number of pipes to draw each round, defaults to 5")
-    argparser.add_argument('--max_pipes', type=int, default=25, help="Maximum number of pipes to draw each round, defaults to 25")
+    p = ArgumentParser(description='Simple curses pipes')
+    p.add_argument(
+        '--symbol_set', nargs='*',
+        choices=list(ARCHIVE.keys()), default=['ASCII'],
+        help=('One or more allowable symbol sets to use, defaults to ASCII '
+              'symbols')
+        )
+    p.add_argument(
+        '--max_framerate', type=int, choices=MAX_FRAMERATE_CHOICES,
+        default=100, help='Maximum allowable drawing rate')
+    p.add_argument(
+        '--color_set', type=str, choices=COLOR_SETS + ['random'],
+        default='random',
+        help='Change the color set pipes are drawn with, defaults to random'
+        )
+    p.add_argument(
+        '--min_pipes', type=int, default=5,
+        help='Minimum number of pipes to draw each round, defaults to 5'
+        )
+    p.add_argument(
+        '--max_pipes', type=int, default=25,
+        help='Maximum number of pipes to draw each round, defaults to 25'
+        )
 
-    args = argparser.parse_args()
+    args = p.parse_args()
 
     run(
         max_framerate=args.max_framerate,
