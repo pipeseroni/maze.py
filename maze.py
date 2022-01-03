@@ -5,7 +5,6 @@ import curses
 from locale import setlocale, LC_ALL
 from random import choice, randint, shuffle
 from math import ceil
-from sys import exit
 from time import sleep
 from argparse import ArgumentParser
 
@@ -309,4 +308,4 @@ def main():
 
 
 if __name__ == '__main__':
-    exit(main())
+    raise SystemExit(main())
