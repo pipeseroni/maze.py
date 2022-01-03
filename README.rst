@@ -24,3 +24,9 @@ terminal. If at any point you wish to uninstall just run the following command:
 ::
 
     % pip3 uninstall maze.py
+
+If you on Windows, install additional dependencies:
+
+::
+
+    pip install -r win-requirements.txt
